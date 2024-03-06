@@ -15,7 +15,8 @@ from orangewidget.utils.filedialogs import format_filter
 from orangewidget.workflow.drophandler import SingleUrlDropHandler
 
 from Orange.data.table import Table, get_sample_datasets_dir
-from Orange.data.io import FileFormat, UrlReader, class_from_qualified_name
+from Orange.data.io import FileFormat, UrlReader, \
+    class_from_qualified_name, GenericHDF5Reader
 from Orange.data.io_base import MissingReaderException
 from Orange.util import log_warnings
 from Orange.widgets import widget, gui
@@ -268,6 +269,14 @@ class OWFile(OWUrlDropBase, RecentPathsWComboMixin):
 
         box.layout().addWidget(self.reader_combo)
         layout.addWidget(box, 0, 1)
+
+        # Set an options box for special types of files that require more
+        # specifications before loading the Orange.table
+        self.options_box = gui.widgetBox(self.controlArea,
+                            orientation=QGridLayout().setSpacing(4), 
+                            box="Options")
+        # Hide the box until needed
+        self.options_box.hide()
 
         box = gui.vBox(self.controlArea, "Info")
         self.infolabel = gui.widgetLabel(box, 'No data loaded.')
