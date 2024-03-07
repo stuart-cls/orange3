@@ -720,6 +720,6 @@ class HDF5Reader(HDF5ReaderBase):
                 for i, attr in enumerate(data.domain.metas):
                     col_type = h5py.string_dtype() if isinstance(attr, StringVariable) else 'f'
                     col_data = data.metas[:, [i]].astype(col_type)
-                    if col_type is not 'f':
+                    if col_type != 'f':
                         col_data[pd.isnull(col_data)] = ""
                     f.create_dataset(f'metas/{i}', data=col_data, dtype=col_type)
