@@ -575,18 +575,6 @@ class GenericHDF5Reader(HDF5ReaderBase):
         """
         return list(self.datasets.keys())
 
-    def select_sheet(self, sheet):
-        """Select dataset to be read
-
-        Parameters
-        ----------
-        sheet : str
-            dataset path
-        """
-        if sheet is None:
-            sheet = self.sheets[0]
-        self.sheet = sheet
-
     def read(self):
         """Process data stored in self.data and returns it as an Orange
         Table object.
@@ -597,12 +585,14 @@ class GenericHDF5Reader(HDF5ReaderBase):
                 Contains the information of the chosen dataset in the hdf5 file.
         """
 
-        if self.sheet is not None:
-            name = self.sheet.split('/')[-1]
+        dset = self.sheet if self.sheet is not None else self.sheets[0]
+
+        if dset is not None:
+            name = dset.split('/')[-1]
         else:
             name = "Data"
 
-        data = self.datasets[self.sheet]
+        data = self.datasets[dset]
 
         # Standard names for the columns of the dataset, can be changed manually
         # in the widget itself
