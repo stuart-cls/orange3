@@ -516,12 +516,42 @@ class UrlReader(FileFormat):
                              content_disposition or '')
         return urlunquote(matches[-1]) if matches else default_name
 
-class HDF5Reader(FileFormat):
+
+class HDF5ReaderBase(FileFormat):
+    """
+    Base Reader for HDF5 files
+
+    Subclasses override check_file to report they can read a particular file structure
+    """
+    EXTENSIONS = ('.hdf5', '.h5')
+    DESCRIPTION = 'Hierarchical Data Format files'
+    SUPPORT_COMPRESSED = False
+    SUPPORT_SPARSE_DATA = False
+
+    @classmethod
+    def valid_file(cls, filename) -> bool:
+        """Subclasses should override this method to report compatible file structure"""
+        return False
+
+    def read(self):
+        readers = [f for f in FileFormat.formats if issubclass(f, HDF5ReaderBase)]
+        for reader in readers:
+            if reader.valid_file(self.filename):
+                return reader(filename=self.filename).read()
+        else:
+            raise ValueError("Not a supported HDF5 file structure.")
+
+
+class HDF5Reader(HDF5ReaderBase):
     """Reader for Orange HDF5 files"""
     EXTENSIONS = ('.hdf5',)
     DESCRIPTION = 'Orange on-disk data'
-    SUPPORT_COMPRESSED = False
-    SUPPORT_SPARSE_DATA = False
+    PRIORITY = HDF5ReaderBase.PRIORITY + 1
+
+    @classmethod
+    def valid_file(cls, filename) -> bool:
+        with h5py.File(filename, "r") as f:
+            return 'domain' in f
 
     def read(self):
         h5file = f = h5py.File(self.filename, "r")
@@ -551,7 +581,7 @@ class HDF5Reader(FileFormat):
                 return f[name]
             return None
 
-        assert 'domain' in f
+        assert self.valid_file(self.filename)
 
         domain = Domain(*[[make_var(*args) for args in read_domain(subdomain)]
                           for subdomain in ['attributes', 'class_vars', 'metas']])
